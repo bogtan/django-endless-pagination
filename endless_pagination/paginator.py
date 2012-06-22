@@ -16,8 +16,8 @@ class CustomPage(Page):
         if self.number == self.paginator.num_pages:
             return self.paginator.count
         return (self.number-1)*self.paginator.per_page + self.paginator.first_page
-        
-        
+
+
 class BasePaginator(Paginator):
     def __init__(self, object_list, per_page, **kwargs):
         if "first_page" in kwargs:
@@ -25,12 +25,12 @@ class BasePaginator(Paginator):
         else:
             self.first_page = per_page
         super(BasePaginator, self).__init__(object_list, per_page, **kwargs)
-    
+
     def get_current_per_page(self, number):
         return self.first_page if number == 1 else self.per_page
 
 
-class DefaultPaginator(BasePaginator):    
+class DefaultPaginator(BasePaginator):
     def page(self, number):
         number = self.validate_number(number)
         bottom = 0 if number == 1 else ((number-2)*self.per_page + self.first_page)
@@ -38,7 +38,7 @@ class DefaultPaginator(BasePaginator):
         if top + self.orphans >= self.count:
             top = self.count
         return CustomPage(self.object_list[bottom:top], number, self)
-        
+
     def _get_num_pages(self):
         if self._num_pages is None:
             if self.count == 0 and not self.allow_empty_first_page:
@@ -48,7 +48,7 @@ class DefaultPaginator(BasePaginator):
                 self._num_pages = int(ceil(hits / float(self.per_page))) + 1
         return self._num_pages
     num_pages = property(_get_num_pages)
-        
+
 
 class LazyPaginator(BasePaginator):
     def validate_number(self, number):
@@ -59,14 +59,15 @@ class LazyPaginator(BasePaginator):
         if number < 1:
             raise EmptyPage('That page number is less than 1')
         return number
-        
+
     def page(self, number):
         number = self.validate_number(number)
         current_per_page = self.get_current_per_page(number)
         bottom = 0 if number == 1 else ((number-2)*self.per_page + self.first_page)
         top = bottom + current_per_page
         # get more objects to see if there is a next page
-        objects = list(self.object_list[bottom:top + self.orphans + 1])
+        self.qs = self.object_list[bottom:top + self.orphans + 3]
+        objects = list(self.qs)
         objects_count = len(objects)
         if objects_count > (current_per_page + self.orphans):
             # if there is a next page increase the total number of pages
@@ -79,7 +80,7 @@ class LazyPaginator(BasePaginator):
             # this is the last page
             self._num_pages = number
         return CustomPage(objects, number, self)
-        
+
     def _get_count(self):
         raise NotImplementedError
     count = property(_get_count)
